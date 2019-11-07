@@ -1,8 +1,10 @@
 # 7k-canvas-anim-countdown
 7k animated countdown file
 
-# params (default 17)
- [HH[:MM[:SS]]]
+# params
+- [HH[:MM[:SS]]]
+ 
+(default is 17)
  
 # samples
  - "index.html?18" - countdown until 18:00
