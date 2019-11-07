@@ -1,0 +1,190 @@
+<!-- giona ~ dicembre 2018 -->
+<!DOCTYPE html>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+    }
+    canvas {
+        display: block;
+    } 
+    body {
+        background: linear-gradient(+25deg, rgb(23, 41, 58), rgb(23, 41, 58), rgba(255, 255, 255, 0.0));
+        background-size: 800% 800%;
+        animation: flash 2.0s;
+    }
+    @keyframes flash {
+        0% {
+            background-position: 100% 0%
+        }
+        50% {
+            background-position: 42% 58%
+        }
+        100% {
+            background-position: 0% 100%
+        }
+    }
+</style>
+<script>
+
+    var partclN = {
+        Particle: function(x, y) {
+            this.x = x;
+            this.y = y;
+            this.radius = 3.5;
+            this.draw = function(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                //ctx.fillStyle = particleAlphabet.color;
+                ctx.fillStyle = 'rgba(' + Math.floor(this.x / 7 % 255) + ','+ Math.floor(Number(partclN.shift)) +',' + Math.floor(this.y / 4 % 255) + ', 1.0)';
+                ctx.fillRect(0, 0, this.radius, this.radius);
+                ctx.restore();
+            };
+        },
+        init: function() {
+            partclN.canvas = document.querySelector('canvas');
+            partclN.ctx = partclN.canvas.getContext('2d');
+            partclN.W = window.innerWidth;
+            partclN.H = window.innerHeight;
+            partclN.particlePositions = [];
+            partclN.particles = [];
+            partclN.tmpCanvas = document.createElement('canvas');
+            partclN.tmpCtx = partclN.tmpCanvas.getContext('2d');
+            
+            partclN.canvas.width = partclN.W;
+            partclN.canvas.height = partclN.H;
+            
+            setInterval(function(){
+                partclN.changeLetter();
+                partclN.getPixels(partclN.tmpCanvas, partclN.tmpCtx);
+            }, 1000); //frame
+            
+            setInterval(function() {
+               if (partclN.shift==255) {partclN.up=false;}
+               if (partclN.shift==0) {partclN.up=true;}
+               if (partclN.up) {partclN.shift++;} else {partclN.shift--;}
+            }, 50); //pixel singolo
+                        
+            partclN.makeParticles(1650);
+            partclN.params();
+            setTimeout(function(){partclN.animate();},1000);
+        },
+        currentPos: 0,
+        shift: 0,
+        up: true,
+        color: 'white',
+        changeLetter: function() {
+            var d = new Date();
+            g = d.getDay();
+            m = d.getMinutes();
+            h = d.getHours();
+            s = d.getSeconds();
+            if ((g==6||g==0)&&!partclN.param) {
+                partclN.time = "enjoy..."
+                partclN.color = 'green';
+            } else {
+                sh = partclN.t[0] - h;
+                sm = partclN.t[1] - m;
+                ss = partclN.t[2] - s;
+                seconds = (sh*60*60)+(sm*60)+ss;
+                if (seconds<=0) {
+                    partclN.time = "GO!!!";
+                    partclN.color = 'grey';
+                } else {
+                    if (seconds<=60) {
+                        partclN.color = 'red';
+                    } else if (seconds<=1800) {
+                        partclN.color = 'orange';
+                    }
+                    partclN.time = partclN.numberWithCommas(seconds);
+                    //particleAlphabet.time = sh+":"+sm+":"+ss;
+                }
+            }
+            partclN.currentPos++;
+        },
+        makeParticles: function(num) {
+            for (var i = 0; i <= num; i++) {
+                partclN.particles.push(new partclN.Particle(partclN.W / 2 + Math.random() * 400 - 200, partclN.H / 2 + Math.random() * 400 - 200));
+            }
+        },
+        getPixels: function(canvas, ctx) {
+            var keyword = partclN.time,
+            gridX = 6,
+            gridY = 6;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.fillStyle = 'red';
+            //ctx.font = 'italic bold 230px Noto Serif';
+            ctx.font = 'italic bold 230px Helvetica';
+            ctx.fillText(keyword, canvas.width / 2 - ctx.measureText(keyword).width / 2, canvas.height / 2 + 100);
+            var idata = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            var buffer32 = new Uint32Array(idata.data.buffer);
+            if (partclN.particlePositions.length > 0) partclN.particlePositions = [];
+            for (var x = 0; x < canvas.width; x += gridX) {
+                for (var y = 0; y < canvas.height; y += gridY) {
+                    if (buffer32[y * canvas.width + x]) {
+                        partclN.particlePositions.push({x: x, y: y});
+                    }
+                }
+            }
+        },
+        animateParticles: function() {
+            var p, pPos;
+            for (var i = 0, num = partclN.particles.length; i < num; i++) {
+                p = partclN.particles[i];
+                pPos = partclN.particlePositions[i];
+                if (partclN.particles.indexOf(p) === partclN.particlePositions.indexOf(pPos)) {
+                    p.x += (pPos.x - p.x) * 0.3;
+                    p.y += (pPos.y - p.y) * 0.3;
+                    p.draw(partclN.ctx);
+                }
+            }
+        },
+        animate: function() {
+            requestAnimationFrame(partclN.animate);
+            partclN.ctx.fillStyle = 'rgba(23, 41, 58, .8)';
+            //partclN.ctx.fillStyle = '#ACD2E7';
+            partclN.ctx.fillRect(0, 0, partclN.W, partclN.H);
+            partclN.animateParticles();
+        },
+    	t: [16, 59, 59],
+        param: false,
+        params: function() {
+        	//var url = new URL(location.href);
+			//var c = url.searchParams.get("t");
+            var c = location.href.split('?');
+            if (c[1]!=null&&c[1]!="") {
+                partclN.param = true;
+            	var t = c[1].split(':');
+                if (t[2]==0||t[2]==null) { t[2] = 59; } else { t[2]--; }
+                if (t[2]==59) { if (t[1]==0||t[1]==null) { t[1] = 59; } else { t[1]--; } }
+                if (t[1]==59) { if (t[0]==0) { t[0] = 23; } else { t[0]--; } }
+                partclN.t = t;
+            }
+		},
+        numberWithCommas: function(x) {
+            x = x.toString();
+            var pattern = /(-?\d+)(\d{3})/;
+            while (pattern.test(x))
+            x = x.replace(pattern, "$1.$2");
+            return x;
+    	}
+    };
+
+    window.onload = partclN.init;
+
+</script>
+<html>
+
+<head>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>7k-canvas-anim-countdown</title>
+</head>
+
+<body>
+    <!--<link href='https://fonts.googleapis.com/css?family=Noto+Serif:700,700italic' rel='stylesheet' type='text/css'>-->
+    <canvas></canvas>
+</body>
+
+</html>
