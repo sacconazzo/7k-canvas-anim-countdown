@@ -1,7 +1,7 @@
 # 7k-canvas-anim-countdown
 7k animated countdown file
 
-https://giona.tech/jws
+https://giona.tech/@
 
 # params
 - [HH[:MM[:SS]]]
